@@ -1,42 +1,40 @@
-# BRIDGE AI LAB
+# AGENTIC AI OFFICE FOR BOX GIRDER BRIDGE DESIGN
 
-A purely fictional, cozy 3D office simulation built with React, TypeScript, Three.js, React Three Fiber, and Drei. No AI APIs, backend, structural calculations, code compliance, or real engineering verification. The original office, camera, furniture, and bridge models are preserved.
+A cozy, purely fictional 3D office game built with React, TypeScript, Three.js, React Three Fiber, and Drei. It is **not** a structural engineering tool. Every project, dimension, score, check, and cost is made-up game data. There are no real engineering calculations, code-compliance claims, AI APIs, or backend services.
+
+The original miniature office, camera controls, characters, furniture, and bridge models remain in the expanded world. The team now has connected structural, sustainability, cost and decision, meeting, and CEO spaces, plus corridors, a pantry, toilets, parking, gardens, cars, and small animals.
 
 ## Run
 
-Install Node.js 22+ and run:
+With Node.js 22+ installed:
 
 ```sh
 npm install
 npm run dev
 ```
 
-Production build: `npm run build`. Serve the `dist` directory with any static web host.
+Run `npm run build` for a static production build in `dist`.
 
 ## Play
 
-- Drag to orbit, scroll/pinch to zoom, right-drag to pan.
-- Click an employee or team card to see their state, current task, project, progress, and thought. View their task, focus the camera, or send them for a coffee break.
-- Click the bridge model or the project arrow to inspect it.
-- Space pauses/resumes; H resets the camera; Escape closes overlays and resets the view.
-- Speed controls change the routine pace. The people button toggles name labels.
-- The six agents pass projects through Atlas → Beam → Check → Eco → Cash → Rank. Watch their physical handoffs and speech bubbles.
-- Check sometimes returns a concept to Beam for revision; after at most two revisions the fictional workflow advances.
-- Rank calls for you in **NEEDS YOU**. Pick a favorite alternative to complete the project and trigger a team celebration.
-- **PROJECTS** keeps the current project and up to 20 completed projects for this browser session. Start another project after completing the current one. **DESIGN BOARD** shows all delivered fictional outputs. **TEAM** shows all six employees.
-- Breaks save progress and resume automatically after ten game seconds at the coffee machine. You can also choose **RETURN TO TASK**. Pausing freezes simulation timers and character animation; camera controls remain available.
-- Everything is session-only; refreshing starts a fresh lab.
+- Drag to rotate, scroll or pinch to zoom, and right-drag to pan. Click a department button or in-scene sign to focus its room. Click any character or the bridge model to focus it.
+- Atlas, Beam, Check, Eco, Cash, and Rank move a fictional project through the existing workflow. Check may send Beam's concept back for a playful revision. Rank eventually asks you to pick a favorite game alternative in **NEEDS YOU**.
+- Eco coordinates Carbon, Durability, Maintain, and Environment. The four specialists work simultaneously on independent, fictional ratings, walk their reports to Eco, and Eco combines their game scores.
+- Click a person or team card to inspect their status, task, progress, and thought. You can view a task, focus the camera, or send a worker on a coffee break.
+- Click Kyaw to visit the CEO panel. Send him to play a game, visit the team, call a meeting, scold an employee, walk outside, or return to his office. He may do these things on his own too.
+- People may take short breaks, visit the toilets, tend the plants, study models, nap, or chat. Toilets briefly hide the visitor from the scene; their status remains visible in the team list.
+- Space pauses or resumes; H resets the camera; Escape closes overlays and resets the view. Playback speed controls change simulation pace. The people button toggles name labels.
+- **PROJECTS** keeps the current project and up to 20 completed fictional projects for this browser session. **DESIGN BOARD** shows delivered game outputs. Refreshing starts a fresh session.
 
-## Simulation architecture
+## Architecture
 
-- `src/simulation/model.ts`: typed agents, roles, states, projects, outputs, and actions.
-- `src/simulation/behavior.ts`: office navigation around furniture and behavior destinations.
-- `src/simulation/engine.ts`: pure, seeded state machine; workflow, handoffs, random events, revisions, and breaks. It has no React, Three.js, browser, network, or engineering dependencies.
-- `src/simulation/useSimulation.ts`: pausable, speed-adjusted clock and React adapter.
-- `src/WorkflowPanel.tsx`: task panels, project history, result cards, and favorite selection.
-- `src/App.tsx`: the existing office and procedural characters, now rendering engine snapshots.
+- `src/simulation/model.ts` defines typed agents, game states, projects, departments, outputs, and actions.
+- `src/simulation/behavior.ts` provides room destinations and simple obstacle-aware routes across the connected office.
+- `src/simulation/engine.ts` is a seeded, deterministic game state machine for workflow handoffs, four concurrent specialists, CEO events, breaks, and random office life. It has no React, Three.js, browser, network, or engineering dependencies.
+- `src/simulation/useSimulation.ts` adapts the game clock to React and supports pausing and speed controls.
+- `src/App.tsx` retains the original office and procedural character scene, while `src/WorldExpansion.tsx` adds the connected rooms and outdoor diorama. `src/WorkflowPanel.tsx` presents game tasks and fictional results.
 
-Geometry is sampled from arbitrary predefined ranges. Reviews, sustainability ratings, and costs are made-up game values. Rank averages three arcade scores, with small random variations for alternatives; this is not engineering optimization. The original 3D bridge model remains a decorative prop and does not represent project geometry.
+Geometry is sampled from arbitrary predefined ranges. Reviews, sustainability ratings, and costs are arcade values. Rank blends game scores with small random variations; this is not engineering optimization. Decorative 3D bridge models do not represent the sampled project values.
 
 ## Verify
 
@@ -45,6 +43,4 @@ node --experimental-strip-types --test tests/simulation.test.ts
 npm run build
 ```
 
-The tests cover seeded full workflows, revision loops, breaks during work and handoffs, project history/reset, bounded game data, and immutable deterministic transitions. Use Node.js 22.6+ for TypeScript test execution.
-
-All geometry and animations are procedural. Google Fonts are optional; system sans-serif fallbacks work offline. Requires a WebGL-capable browser with hardware acceleration.
+The tests cover seeded workflows, revisions, handoffs, breaks, project history, game-data bounds, route finding, parallel sustainability workers, toilet visits, CEO commands, and deterministic transitions. Node.js 22.6+ is needed for direct TypeScript test execution. A WebGL-capable browser is required to view the 3D scene.

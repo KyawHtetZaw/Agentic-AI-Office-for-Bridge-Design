@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSimulation, reduceSimulation } from '../src/simulation/engine.ts';
-import { people } from '../src/simulation/model.ts';
+import { people, workers, everyone, location } from '../src/simulation/model.ts';
+import { planRoute, blocked } from '../src/simulation/behavior.ts';
 import type { Simulation, Person } from '../src/simulation/model.ts';
 
 function advance(s: Simulation, until: (state: Simulation) => boolean, limit = 10000) {
@@ -24,6 +25,14 @@ test('all six stages produce bounded fictional data across deterministic seeds',
     assert.ok(p.reviews.at(-1)!.accepted);
     assert.ok(p.revision <= 2);
     assert.ok(p.sustainability && p.cost);
+    for (const name of workers) {
+      assert.ok(p.workerResults[name], `${name} must deliver a department result`);
+      assert.equal(p.workerResults[name]!.details.length, 3);
+    }
+    assert.equal(p.sustainability!.carbon, p.workerResults.Carbon!.score);
+    assert.equal(p.sustainability!.durability, p.workerResults.Durability!.score);
+    assert.equal(p.sustainability!.maintainability, p.workerResults.Maintain!.score);
+    assert.equal(p.sustainability!.environmental, p.workerResults.Environment!.score);
     assert.equal(p.alternatives!.length, 3);
     for (const a of p.alternatives!) {
       assert.ok(a.score >= 0 && a.score <= 100);
@@ -82,6 +91,62 @@ test('new project resets outputs while retaining completed project history', () 
   assert.equal(s.project.cost, undefined);
   assert.deepEqual(s.history[0], old);
   assert.ok(people.every(n => s.agents[n].projectId === 'BG-025'));
+  assert.ok(workers.every(n => s.agents[n].projectId === 'BG-025'));
+});
+test('room routes use corridor and door gaps instead of jumping between rooms', () => {
+  const pairs = [
+    [location('Beam','desk'), location('Carbon','desk')],
+    [location('Eco','desk'), location('Cash','desk')],
+    [location('Kyaw','ceoOffice'), location('Kyaw','parking')],
+    [location('Cash','desk'), location('Cash','coffee')],
+  ] as const;
+  for (const [from,to] of pairs) {
+    const route = planRoute(from,to);
+    assert.ok(route.length > 3, 'cross-room travel should include multiple path corners');
+    assert.deepEqual(route.at(-1),to);
+    assert.ok(route.slice(0,-1).every(point => !blocked(point)), 'corridor waypoints must avoid furniture and walls');
+  }
+});
+test('four specialists work concurrently and report to Eco before Cash', () => {
+  let s = advance(createSimulation(8), s => s.project.phase === 'department');
+  s = advance(s, s => workers.every(name => s.agents[name].state === 'WORKING'));
+  assert.ok(workers.every(name => s.agents[name].progress < 100));
+  s = advance(s, s => s.project.phase === 'reports');
+  assert.ok(workers.every(name => s.project.workerResults[name]));
+  assert.equal(s.project.sustainability, undefined);
+  s = advance(s, s => s.project.stage === 'Cash');
+  assert.ok(s.project.sustainability);
+});
+test('toilet visit hides an idle character briefly, then sends them home', () => {
+  let found = false;
+  for (let seed = 1; seed <= 20 && !found; seed++) {
+    let s = createSimulation(seed);
+    for (let i=0;i<1800;i++) {
+      s = reduceSimulation(s,{type:'tick',dt:.25});
+      const away = everyone.find(name => s.agents[name].hiddenUntil > s.time);
+      if (away) {
+        found=true; assert.equal(s.agents[away].state,'AWAY');
+        s = advance(s, next => next.agents[away].hiddenUntil === 0);
+        assert.notEqual(s.agents[away].state,'AWAY'); break;
+      }
+    }
+  }
+  assert.ok(found,'a seeded random event should visit the toilet');
+});
+test('CEO controls trigger physical travel, amusing dialog, and return', () => {
+  let s = createSimulation(19);
+  s = reduceSimulation(s,{type:'ceo',command:'scold',target:'Beam'});
+  assert.equal(s.agents.Kyaw.state,'WALKING');
+  assert.ok(s.agents.Kyaw.route.length>2);
+  s = advance(s, next => next.agents.Kyaw.bubble.includes('Why is this project'));
+  assert.ok(s.events.some(event => event.name==='Beam' && event.text.includes('boss')));
+  s = advance(s, next => next.agents.Kyaw.state==='PLAYING' && next.ceoStory===null);
+  assert.equal(s.agents.Kyaw.destination,'game');
+  const meetingStart=s.time;
+  s = reduceSimulation(s,{type:'ceo',command:'meeting'});
+  assert.ok(everyone.some(name => name!=='Kyaw' && s.agents[name].destination==='meeting'));
+  s = advance(s, next => next.events.some(event => event.time>=meetingStart && event.text.includes('forgot why')));
+  assert.equal(s.agents.Kyaw.pose,'sleep');
 });
 test('transitions are deterministic, immutable, and zero-time ticks are inert', () => {
   const initial = createSimulation(42), copy = structuredClone(initial);
