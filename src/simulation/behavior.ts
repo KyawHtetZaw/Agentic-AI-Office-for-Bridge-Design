@@ -48,5 +48,5 @@ export function move(agent:Agent,dt:number){
   }
   if(!agent.route.length){agent.state=agent.arrivalState;agent.heading=agent.destination==='coffee'?-Math.PI/2:agent.destination==='sofa'||(agent.destination==='meeting'&&agent.position[1]<10)?0:Math.PI}
 }
-export const workPlaces:Record<Person,Place>={Atlas:'desk',Beam:'desk',Check:'desk',Eco:'desk',Cash:'desk',Rank:'desk',Carbon:'desk',Durability:'desk',Maintain:'desk',Environment:'desk',Kyaw:'ceoOffice'};
+export const workPlaces:Record<Person,Place>={Atlas:'desk',Beam:'desk',Check:'desk',Eco:'desk',Cash:'desk',Rank:'desk',Carbon:'desk',Durability:'desk',Maintain:'ecoModel',Environment:'ecoMap',Kyaw:'ceoOffice'};
 export const workPoses:Record<Person,Pose>={Atlas:'typing',Beam:'typing',Check:'inspect',Eco:'inspect',Cash:'count',Rank:'chart',Carbon:'typing',Durability:'inspect',Maintain:'chart',Environment:'inspect',Kyaw:'game'};

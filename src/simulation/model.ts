@@ -4,6 +4,12 @@ export const workers = ['Carbon', 'Durability', 'Maintain', 'Environment'] as co
 export const everyone = [...people, ...workers, 'Kyaw'] as const;
 export type Worker = typeof workers[number];
 export type Person = typeof everyone[number];
+export type Department = 'Management' | 'Structural' | 'Sustainability' | 'Commercial & Decision';
+export const departments: Record<Person, Department> = {
+  Kyaw: 'Management', Atlas: 'Management', Beam: 'Structural', Check: 'Structural',
+  Eco: 'Sustainability', Carbon: 'Sustainability', Durability: 'Sustainability', Maintain: 'Sustainability', Environment: 'Sustainability',
+  Cash: 'Commercial & Decision', Rank: 'Commercial & Decision',
+};
 export type Point = [number, number];
 export type Room = 'Structural' | 'Sustainability' | 'Cost & Decision' | 'CEO Office' | 'Meeting Room' | 'Outside';
 export const rooms: Record<Room, Point> = {
@@ -11,7 +17,7 @@ export const rooms: Record<Room, Point> = {
   'CEO Office': [-2.5, 10], 'Meeting Room': [3.7, 10], Outside: [5, 22],
 };
 export type Place = 'desk' | 'bridge' | 'coffee' | 'whiteboard' | 'meeting' | 'sofa' | 'server' | 'plant' |
-  'ceoOffice' | 'game' | 'window' | 'garden' | 'cat' | 'parking' | 'outside' | 'pantry' | 'toiletMen' | 'toiletWomen' | 'lobby';
+  'ceoOffice' | 'game' | 'window' | 'garden' | 'bench' | 'cat' | 'parking' | 'outside' | 'pantry' | 'toiletMen' | 'toiletWomen' | 'lobby' | 'ecoModel' | 'ecoMap';
 export type AgentState = 'IDLE' | 'WALKING' | 'WORKING' | 'WAITING' | 'NEEDS YOU' | 'BREAK' | 'COMPLETED' | 'MEETING' | 'AWAY' | 'BORED' | 'PLAYING' | 'WORKING VERY HARD';
 export type Pose = 'normal' | 'typing' | 'inspect' | 'coffee' | 'water' | 'count' | 'chart' | 'celebrate' | 'sleep' | 'stretch' | 'game' | 'phone' | 'look';
 export const stateIcons: Record<AgentState, string> = { IDLE: '⚪', WALKING: '🔵', WORKING: '🟢', WAITING: '🟡', 'NEEDS YOU': '🔴', BREAK: '☕', COMPLETED: '✅', MEETING: '🤝', AWAY: '🚻', BORED: '😐', PLAYING: '🎮', 'WORKING VERY HARD': '😰' };
@@ -41,9 +47,9 @@ export function location(name: Person, place: Place): Point {
     bridge: [-1 + index % 3 * .65, 1.25], coffee: [2.2 + index % 2 * .5, 16],
     whiteboard: [3.75, -2.05], meeting: [2.1 + index % 3 * .75, 9 + Math.floor(index % 6 / 3) * 1.1],
     sofa: [-3.9 + index % 2 * .8, 11.6], server: [16.5, 8.8], plant: [9.1, 2.8],
-    ceoOffice: [-2.8, 9], game: [-4.1, 12.25], window: [-5.25, 10.4], garden: [-3.5, 22],
+    ceoOffice: [-2.8, 9], game: [-4.1, 12.25], window: [-5.25, 10.4], garden: [-3.5, 22], bench: [-4.9, 21.85],
     cat: [2.6, 19.3], parking: [20.6, 20.2], outside: [4, 22], pantry: [15.9, 11.7],
-    toiletMen: [-3.6, 16.9], toiletWomen: [-.8, 16.9], lobby: [3.4, 16.7],
+    toiletMen: [-3.6, 16.9], toiletWomen: [-.8, 16.9], lobby: [3.4, 16.7], ecoModel: [16.1, -.1], ecoMap: [16.4, 2.6],
   };
   return spots[place];
 }
@@ -58,15 +64,25 @@ export interface Review { geometry: 'PASS' | 'REVIEW'; serviceability: 'PASS' | 
 export interface Sustainability { carbon: number; durability: number; maintainability: number; environmental: number }
 export interface WorkerResult { score: number; details: [string, number][] }
 export interface Cost { concrete: number; prestressing: number; reinforcement: number; millions: number; score: number }
-export interface Alternative { name: string; structural: number; sustainability: number; cost: number; score: number }
+export interface Concept { name: string; geometry: Geometry; structural: number; review: 'PENDING' | 'PASS' | 'REVIEW' }
+export interface Alternative extends Concept { carbon: number; durability: number; maintainability: number; environmental: number; sustainability: number; cost: number; score: number }
+export type DecisionIssue = 'checkRevision' | 'ecoTradeoff' | 'rankChoice' | 'ceoApproval';
+export interface GameStats {
+  projectsCompleted: number; projectsRejected: number; beamRevisions: number; checkRejections: number;
+  carbonAssessments: number; maintenanceComplaints: number; environmentalWarnings: number; costArguments: number;
+  sustainabilityMeetings: number; coffeeConsumed: number; ceoCoffeeConsumed: number; ceoNaps: number; ceoScoldings: number; beamScoldings: number;
+  ceoGamingSessions: number; pointlessMeetings: number; toiletBreaks: number;
+}
 export interface Project {
   id: string; title: string; type: string; alignment: string; spans: number; span: number; width: number; pier: number;
-  revision: number; status: 'ACTIVE' | 'NEEDS YOU' | 'COMPLETE'; stage: CorePerson; phase: 'travel' | 'work' | 'handoff' | 'department' | 'reports' | 'decision' | 'complete';
+  revision: number; status: 'ACTIVE' | 'NEEDS YOU' | 'COMPLETE'; stage: CorePerson; phase: 'travel' | 'work' | 'inspection' | 'handoff' | 'department' | 'reports' | 'ecoChoice' | 'decision' | 'ceoReview' | 'complete';
   sender: Person | null; workElapsed: number; geometry?: Geometry; reviews: Review[];
-  workerResults: Partial<Record<Worker, WorkerResult>>; sustainability?: Sustainability; cost?: Cost; alternatives?: Alternative[]; winner?: string; startedAt: number; completedAt?: number;
+  concepts?: Concept[]; workerResults: Partial<Record<Worker, WorkerResult>>; sustainability?: Sustainability; cost?: Cost; alternatives?: Alternative[];
+  winner?: string; issue?: DecisionIssue; ecoPreference?: 'A' | 'B'; ignored?: boolean; startedAt: number; completedAt?: number;
 }
 export interface LabEvent { id: number; name: Person; text: string; time: number }
 export interface CeoStory { kind: string; target: Person | null; until: number; phase: 'travel' | 'scene' | 'return'; followup?: string; previousState?: AgentState; previousPose?: Pose }
-export interface Simulation { agents: Record<Person, Agent>; project: Project; history: Project[]; events: LabEvent[]; time: number; seed: number; eventId: number; nextEvent: number; nextProject: number; nextCeo: number; ceoStory: CeoStory | null }
-export type CeoCommand = 'office' | 'visit' | 'meeting' | 'game' | 'coffee' | 'nap' | 'roam' | 'scold' | 'phone' | 'window' | 'cat' | 'car' | 'garden';
-export type Action = { type: 'tick'; dt: number } | { type: 'break'; name: Person } | { type: 'resume'; name: Person } | { type: 'new' } | { type: 'choose'; alternative: string } | { type: 'activity'; name: Person; place: Place } | { type: 'ceo'; command: CeoCommand; target?: Person };
+export interface Simulation { agents: Record<Person, Agent>; project: Project; history: Project[]; events: LabEvent[]; stats: GameStats; time: number; seed: number; eventId: number; nextEvent: number; nextSocial: number; nextProject: number; nextCeo: number; celebrationUntil: number; lateCeoAt: number; ceoStory: CeoStory | null }
+export type CeoCommand = 'office' | 'visit' | 'meeting' | 'game' | 'coffee' | 'nap' | 'roam' | 'scold' | 'phone' | 'window' | 'cat' | 'car' | 'garden' | 'toilet' | 'inspectBridge';
+export type DecisionChoice = 'approveRevision' | 'sendBack' | 'askCheck' | 'chooseA' | 'chooseB' | 'askCash' | 'askBeam' | 'meeting' | 'ignore' | 'approveProject' | 'rejectProject' | 'sleep';
+export type Action = { type: 'tick'; dt: number } | { type: 'break'; name: Person } | { type: 'resume'; name: Person } | { type: 'new' } | { type: 'choose'; alternative: string } | { type: 'decision'; choice: DecisionChoice } | { type: 'activity'; name: Person; place: Place } | { type: 'ceo'; command: CeoCommand; target?: Person };
